@@ -14,18 +14,19 @@ using namespace std;
 typedef pair<int, int> coord;
 
 int N;
-int x[100];
+int x[100]; // farm coordinates
 int y[100];
 
 set<coord> farmsSet;
-map<int, set<int>> x_col;
+map<int, set<int>> x_col; // used for fast collision detecting
 map<int, set<int>> y_col;
 
-
+// distance between two points on a plane
 int distance(const coord &u, const coord &v) {
     return abs(u.first - v.first) + abs(u.second - v.second);
 }
 
+// filling up collision map
 void build_collisions() {
     for (int i = 0; i < N; i++) {
         x_col[x[i]].insert(y[i]);
@@ -33,6 +34,7 @@ void build_collisions() {
     }
 }
 
+// length of the max step by x
 int x_distance(const coord &a, const coord &b) {
     int dist = b.first - a.first;
     set<int> *xs = &y_col[a.second];
@@ -60,6 +62,7 @@ int x_distance(const coord &a, const coord &b) {
     return abs(dist) < abs(col_dist) ? dist : col_dist;
 }
 
+// length of the max step by y
 int y_distance(const coord &a, const coord &b) {
     int dist = b.second - a.second;
     set<int> *ys = &x_col[a.first];
@@ -87,6 +90,7 @@ int y_distance(const coord &a, const coord &b) {
     return abs(dist) < abs(col_dist) ? dist : col_dist;
 }
 
+// comparator for queue
 struct Comparator {
     const coord start;
     const coord end;
@@ -98,6 +102,7 @@ struct Comparator {
     }
 };
 
+// calculates length of a shortest path between two points
 int relax(const coord &from, const coord &to, map<coord, int> *relaxed) {
     priority_queue<coord, vector<coord>, Comparator> pq((Comparator(from, to)));
     map<coord, int> distances;
@@ -105,11 +110,11 @@ int relax(const coord &from, const coord &to, map<coord, int> *relaxed) {
     int k = 0;
     int prev_dist = 0;
 
-    for (const coord &farm: farmsSet) {
+    for (const coord &farm: farmsSet) { // mark visited all farms except start and end
         if (!(farm == from || farm == to)) visited.insert(farm);
     }
 
-    pq.push(from);
+    pq.push(from); // add first node
     distances.insert(make_pair(from, 0));
 
     while (!pq.empty()) {
@@ -121,11 +126,10 @@ int relax(const coord &from, const coord &to, map<coord, int> *relaxed) {
 
         int dist = distances.at(node);
 
-        if (node == to) return dist;
+        if (node == to) return dist; // if path exists
 
         if (distance(node, from) < dist && relaxed->find(node) == relaxed->end()) {
-
-            (*relaxed)[node] = dist;
+            (*relaxed)[node] = dist; // inner call
             dist = relax(from, node, relaxed);
             distances[node] = dist;
             (*relaxed)[node] = dist;
@@ -145,7 +149,7 @@ int relax(const coord &from, const coord &to, map<coord, int> *relaxed) {
             return -1;
         }
 
-        int x_dist = x_distance(node, to);
+        int x_dist = x_distance(node, to); // max steps
         int y_dist = y_distance(node, to);
 
         coord adj;
